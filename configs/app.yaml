@@ -1,0 +1,24 @@
+ws:
+  #http服务的端口
+  http_port: 8881
+  #websocket的端口
+  ws_port: 8882
+  #grpc的端口
+  grpc_port: 8883
+  #是否启用集群
+  is_cluster: true
+
+etcd:
+  dial_timeout: 5
+  endpoints:
+    - 127.0.0.1:2379
+  username:
+  password:
+
+log:
+  folder: ./log
+  file: app.log
+  max_size: 10 #进行切割之前,日志文件的最大大小(MB为单位)
+  max_age: 10 #保留旧文件的最大天数
+  max_backups: 10 #保留旧文件的最大个数
+  compress: false #是否压缩/归档旧文件
