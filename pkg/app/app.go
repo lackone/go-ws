@@ -11,9 +11,9 @@ type Response struct {
 }
 
 type Return struct {
-	code int         `json:"code"` //状态码
-	msg  string      `json:"msg"`  //消息
-	data interface{} `json:"data"` //数据
+	Code int         `json:"code"` //状态码
+	Msg  string      `json:"msg"`  //消息
+	Data interface{} `json:"data"` //数据
 }
 
 func NewResponse(ctx *gin.Context) *Response {
@@ -27,16 +27,16 @@ func (r *Response) ToSuccess(data interface{}) {
 		data = gin.H{}
 	}
 	r.Ctx.JSON(http.StatusOK, Return{
-		code: http.StatusOK,
-		msg:  "success",
-		data: data,
+		Code: http.StatusOK,
+		Msg:  "success",
+		Data: data,
 	})
 }
 
 func (r *Response) ToError(err *errcode.Error) {
 	r.Ctx.JSON(err.StatusCode(), Return{
-		code: err.Code(),
-		msg:  err.Msg(),
-		data: err.Details(),
+		Code: err.Code(),
+		Msg:  err.Msg(),
+		Data: err.Details(),
 	})
 }

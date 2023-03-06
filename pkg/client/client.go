@@ -6,26 +6,67 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/lackone/go-ws/global"
 	"go.uber.org/zap"
+	"net/netip"
+	"sync"
 	"time"
 )
 
 type Client struct {
-	id           int64           //客户端ID，自动分配
-	conn         *websocket.Conn //ws连接
-	clientManage *ClientManage   //客户端管理
-	connectTime  int64           //首次连接时间
-	send         chan []byte     //发送消息
-	groups       []string        //客户加入的组
+	id           int64               //客户端ID，自动分配
+	conn         *websocket.Conn     //ws连接
+	clientManage *ClientManage       //客户端管理
+	connectTime  int64               //首次连接时间
+	send         chan []byte         //发送消息
+	groups       map[string]struct{} //客户加入的组
+	groupsLock   sync.RWMutex        //组锁
+	ip           string              //客户端IP，用于标识同一主机
 }
 
 func NewClient(id int64, conn *websocket.Conn, clientManage *ClientManage) *Client {
+	addrPort, _ := netip.ParseAddrPort(conn.RemoteAddr().String())
+
 	return &Client{
 		id:           id,
 		conn:         conn,
 		clientManage: clientManage,
 		connectTime:  time.Now().Unix(),
-		send:         make(chan []byte),
+		send:         make(chan []byte, 256),
+		groups:       make(map[string]struct{}),
+		groupsLock:   sync.RWMutex{},
+		ip:           addrPort.Addr().String(),
 	}
+}
+
+// 获取ip
+func (c *Client) GetIP() string {
+	return c.ip
+}
+
+// 加入组
+func (c *Client) AddGroup(group string) {
+	c.groupsLock.Lock()
+	defer c.groupsLock.Unlock()
+	c.groups[group] = struct{}{}
+}
+
+// 删除组
+func (c *Client) DelGroup(group string) {
+	c.groupsLock.Lock()
+	defer c.groupsLock.Unlock()
+	delete(c.groups, group)
+}
+
+// 所有组
+func (c *Client) AllGroup() []string {
+	c.groupsLock.RLock()
+	defer c.groupsLock.RUnlock()
+	list := make([]string, 0)
+	if len(c.groups) > 0 {
+		for k, _ := range c.groups {
+			list = append(list, k)
+		}
+	}
+	return list
 }
 
 // 读消息
@@ -94,6 +135,12 @@ func (c *Client) ProcessMessage(msg []byte) {
 	return
 }
 
+// 发送通用消息
+func (c *Client) SendCommonMsg(code int, msg string, data interface{}) {
+	bytes, _ := NewClientResponse(code, msg, data).GetByte()
+	c.SendMsg(bytes)
+}
+
 // 发送消息
 func (c *Client) SendMsg(msg []byte) {
 	defer func() {
@@ -104,8 +151,6 @@ func (c *Client) SendMsg(msg []byte) {
 
 	select {
 	case c.send <- msg:
-	default:
-
 	}
 }
 
@@ -145,4 +190,28 @@ func (c *Client) WriteLoop() {
 			}
 		}
 	}
+}
+
+// 关闭
+func (c *Client) Close() {
+	c.clientManage.disconnectChan <- c
+	c.conn.Close()
+}
+
+// 客户端ID
+func (c *Client) GetID() int64 {
+	return c.id
+}
+
+// 组列表
+func (c *Client) GroupList() []string {
+	list := make([]string, 0)
+
+	if len(c.groups) > 0 {
+		for k, _ := range c.groups {
+			list = append(list, k)
+		}
+	}
+
+	return list
 }

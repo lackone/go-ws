@@ -1,0 +1,2 @@
+{"level":"ERROR","time":"2023-03-06T16:35:17.511+0800","caller":"client/client.go:96","msg":"client[1632660834821869568] ReadMessage error","error":"websocket: close 1000 (normal)"}
+{"level":"ERROR","time":"2023-03-06T17:50:20.271+0800","caller":"client/client.go:96","msg":"client[1632679869311619072] ReadMessage error","error":"websocket: close 1000 (normal)"}
