@@ -2,21 +2,46 @@ package setting
 
 import (
 	"github.com/fsnotify/fsnotify"
-	"github.com/lackone/go-ws/global"
 	"github.com/spf13/viper"
-	"strings"
 	"time"
 )
 
 var sections = make(map[string]interface{})
 
-type WsSetting struct {
+type HttpSetting struct {
+	Mode             string
 	HttpPort         int
 	HttpReadTimeout  time.Duration
 	HttpWriteTimeout time.Duration
-	WsPort           int
-	GrpcPort         int
-	IsCluster        bool
+	IsTLS            bool
+	TLSCertFile      string
+	TLSKeyFile       string
+}
+
+type WsSetting struct {
+	Mode              string
+	WsPort            int
+	HttpReadTimeout   time.Duration
+	HttpWriteTimeout  time.Duration
+	ReadLimit         int64
+	HeartbeatInterval time.Duration
+	ReadDeadline      time.Duration
+	WriteDeadline     time.Duration
+	PingMessage       string
+	IsCluster         bool
+	IsTLS             bool
+	TLSCertFile       string
+	TLSKeyFile        string
+	ReadBufferSize    int
+	WriteBufferSize   int
+}
+
+type GrpcSetting struct {
+	GrpcPort int
+}
+
+type SnowflakeSetting struct {
+	NodeId int64
 }
 
 type EtcdSetting struct {
@@ -88,25 +113,5 @@ func (s *Setting) ReloadSection() error {
 			return err
 		}
 	}
-	return nil
-}
-
-func InitSetting(conf string) error {
-	s, err := NewSetting(strings.Split(conf, ",")...)
-	err = s.ReadSection("ws", &global.WsSetting)
-	if err != nil {
-		return err
-	}
-	err = s.ReadSection("etcd", &global.EtcdSetting)
-	if err != nil {
-		return err
-	}
-	err = s.ReadSection("log", &global.LogSetting)
-	if err != nil {
-		return err
-	}
-	global.WsSetting.HttpReadTimeout *= time.Second
-	global.WsSetting.HttpWriteTimeout *= time.Second
-	global.EtcdSetting.DialTimeout *= time.Second
 	return nil
 }

@@ -1,24 +1,55 @@
-ws:
+http:
+  Mode: debug
   #http服务的端口
-  http_port: 8881
+  HttpPort: 8881
+  HttpReadTimeout: 5
+  HttpWriteTimeout: 5
+  IsTLS: false
+  TLSCertFile:
+  TLSKeyFile:
+
+ws:
+  Mode: debug
   #websocket的端口
-  ws_port: 8882
-  #grpc的端口
-  grpc_port: 8883
+  WsPort: 8882
+  HttpReadTimeout: 10
+  HttpWriteTimeout: 10
+  #最大读取长度
+  ReadLimit: 1024
+  #心跳间隔
+  HeartbeatInterval: 15
+  #读等待时间
+  ReadDeadline: 30
+  #写等待时间
+  WriteDeadline: 10
+  #ping消息
+  PingMessage:
   #是否启用集群
-  is_cluster: true
+  IsCluster: true
+  IsTLS: false
+  TLSCertFile:
+  TLSKeyFile:
+  ReadBufferSize: 1024
+  WriteBufferSize: 1024
+
+grpc:
+  #grpc的端口
+  GrpcPort: 8883
+
+snowflake:
+  NodeId: 1
 
 etcd:
-  dial_timeout: 5
-  endpoints:
+  DialTimeout: 5
+  Endpoints:
     - 127.0.0.1:2379
-  username:
-  password:
+  Username:
+  Password:
 
 log:
-  folder: ./log
-  file: app.log
-  max_size: 10 #进行切割之前,日志文件的最大大小(MB为单位)
-  max_age: 10 #保留旧文件的最大天数
-  max_backups: 10 #保留旧文件的最大个数
-  compress: false #是否压缩/归档旧文件
+  Folder: ./log
+  File: app.log
+  MaxSize: 10 #进行切割之前,日志文件的最大大小(MB为单位)
+  MaxAge: 10 #保留旧文件的最大天数
+  MaxBackups: 10 #保留旧文件的最大个数
+  Compress: false #是否压缩/归档旧文件

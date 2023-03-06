@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"github.com/lackone/go-ws/global"
 	"github.com/lackone/go-ws/pkg/utils"
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
@@ -16,12 +15,12 @@ type Logger struct {
 	file   string
 }
 
-func NewLogger(folder, file string, level zapcore.Level) *Logger {
+func NewLogger(folder, file string, level zapcore.Level, maxSize int, maxBackups int, maxAge int, compress bool) *Logger {
 	if !utils.Exists(folder) {
 		os.MkdirAll(folder, os.ModePerm)
 	}
 
-	logWriter := getLogWriter(filepath.Join(folder, file))
+	logWriter := getLogWriter(filepath.Join(folder, file), maxSize, maxBackups, maxAge, compress)
 	logEncoder := getLogEncoder()
 	stackTraceLevel := getStackTraceLevel()
 
@@ -43,13 +42,13 @@ func getStackTraceLevel() zap.LevelEnablerFunc {
 	}
 }
 
-func getLogWriter(filename string) zapcore.WriteSyncer {
+func getLogWriter(filename string, maxSize int, maxBackups int, maxAge int, compress bool) zapcore.WriteSyncer {
 	lumberjack := &lumberjack.Logger{
 		Filename:   filename,
-		MaxSize:    global.LogSetting.MaxSize,
-		MaxBackups: global.LogSetting.MaxBackups,
-		MaxAge:     global.LogSetting.MaxAge,
-		Compress:   global.LogSetting.Compress,
+		MaxSize:    maxSize,
+		MaxBackups: maxBackups,
+		MaxAge:     maxAge,
+		Compress:   compress,
 	}
 	return zapcore.AddSync(lumberjack)
 }
@@ -62,8 +61,4 @@ func getLogEncoder() zapcore.Encoder {
 	encoderConfig.EncodeDuration = zapcore.SecondsDurationEncoder
 	encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
 	return zapcore.NewJSONEncoder(encoderConfig)
-}
-
-func InitLogger() {
-	global.Logger = NewLogger(global.LogSetting.Folder, global.LogSetting.File, zap.InfoLevel)
 }

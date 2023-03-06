@@ -1,19 +1,9 @@
 package main
 
 import (
-	"context"
 	"flag"
-	"fmt"
 	"github.com/lackone/go-ws/global"
-	"github.com/lackone/go-ws/pkg/logger"
-	"github.com/lackone/go-ws/pkg/setting"
-	"github.com/lackone/go-ws/routes"
-	"log"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
+	"github.com/lackone/go-ws/pkg/server"
 )
 
 var (
@@ -30,40 +20,19 @@ func init() {
 	InitFlag()
 
 	//初始化配置
-	setting.InitSetting(conf)
-
+	global.InitSetting(conf)
 	//初始化日志
-	logger.InitLogger()
+	global.InitLogger()
+	//初始化ws升级协议
+	global.InitWsUpgrader()
+	//初始化雪化算法
+	global.InitSnowflakeNode()
 }
 
 func main() {
-	router := routes.NewRouter()
-	s := http.Server{
-		Addr:           fmt.Sprintf(":%d", global.WsSetting.HttpPort),
-		Handler:        router,
-		ReadTimeout:    global.WsSetting.HttpReadTimeout,
-		WriteTimeout:   global.WsSetting.HttpWriteTimeout,
-		MaxHeaderBytes: 1 << 32,
-	}
+	go server.InitHttpServer()
 
-	go func() {
-		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalln("server listen err", err)
-		}
-	}()
+	go server.InitWsServer()
 
-	//监控SIGINT和SIGTERM信号，实现优雅关机
-	quit := make(chan os.Signal)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	log.Println("shutdown server...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
-	if err := s.Shutdown(ctx); err != nil {
-		log.Fatalln("shutdown server err", err)
-	}
-
-	log.Println("server exit...")
+	select {}
 }
