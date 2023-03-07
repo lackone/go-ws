@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+option go_package = "proto/im";
+
+service IMService {
+  rpc SendClients(SendClientsReq) returns (CommonRes) {};
+  rpc SendGroups(SendGroupsReq) returns (CommonRes) {};
+  rpc SendMachines(SendMachinesReq) returns (CommonRes) {};
+  rpc Broadcast(BroadcastReq) returns (CommonRes) {};
+  rpc AddGroup(AddGroupReq) returns (CommonRes) {};
+  rpc DelGroup(DelGroupReq) returns (CommonRes) {};
+  rpc OnlineList(OnlineListReq) returns (CommonRes) {};
+  rpc GroupList(GroupListReq) returns (CommonRes) {};
+  rpc MachineList(MachineListReq) returns (CommonRes) {};
+}
+
+message SendClientsReq {
+  string from = 1;
+  repeated string tos = 2;
+  string msg = 3;
+}
+
+message SendGroupsReq {
+  string from = 1;
+  repeated string groups = 2;
+  string msg = 3;
+}
+
+message SendMachinesReq {
+  string from = 1;
+  repeated string ips = 2;
+  string msg = 3;
+}
+
+message BroadcastReq {
+  string from = 1;
+  string msg = 2;
+}
+
+message AddGroupReq {
+  string clientId = 1;
+  repeated string groups = 2;
+}
+
+message DelGroupReq {
+  string clientId = 1;
+  repeated string groups = 2;
+}
+
+message OnlineListReq {
+
+}
+
+message GroupListReq {
+  string clientId = 1;
+}
+
+message MachineListReq {
+
+}
+
+message CommonRes {
+  int32 code = 1;
+  string msg = 2;
+  bytes data = 3;
+}

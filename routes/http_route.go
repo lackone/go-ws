@@ -21,7 +21,6 @@ func NewHttpRouter() *gin.Engine {
 
 	hc := &api.HttpController{}
 
-	r.GET("/send_client", hc.SendClient)
 	r.GET("/send_clients", hc.SendClients)
 	r.GET("/send_groups", hc.SendGroups)
 	r.GET("/send_machines", hc.SendMachines)

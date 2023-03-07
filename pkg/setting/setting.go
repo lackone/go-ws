@@ -34,6 +34,7 @@ type WsSetting struct {
 	TLSKeyFile        string
 	ReadBufferSize    int
 	WriteBufferSize   int
+	AesKey            string
 }
 
 type GrpcSetting struct {

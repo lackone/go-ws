@@ -51,3 +51,7 @@ func InitSetting(conf string) error {
 	EtcdSetting.DialTimeout *= time.Second
 	return nil
 }
+
+func IsCluster() bool {
+	return WsSetting.IsCluster
+}

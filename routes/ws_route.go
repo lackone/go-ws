@@ -21,6 +21,7 @@ func NewWsRouter() *gin.Engine {
 	ws := &api.WsController{}
 	r.GET("/ws", ws.Ws)
 
+	//处理ws客户端的请求回调
 	client.WsClientHandler.Register("hello", func(c *client.Client, data []byte) client.ClientResponse {
 		return client.ClientResponse{
 			Code: 200,

@@ -6,28 +6,12 @@ import (
 	"github.com/lackone/go-ws/pkg/client"
 	"github.com/lackone/go-ws/pkg/errcode"
 	"github.com/lackone/go-ws/pkg/request"
+	"github.com/lackone/go-ws/pkg/service"
+	"net"
 	"strconv"
 )
 
 type HttpController struct {
-}
-
-// 给客户端发消息
-func (h *HttpController) SendClient(ctx *gin.Context) {
-	req := request.SendClientsRequest{}
-	res := app.NewResponse(ctx)
-	valid, errors := app.BindAndValid(ctx, &req)
-	if !valid {
-		errs := errcode.InvalidParams.WithDetails(errors.Errors()...)
-		res.ToError(errs)
-		return
-	}
-
-	bytes, _ := client.NewClientResponse(200, req.Msg, gin.H{"from": req.From, "msg": req.Msg}).GetByte()
-
-	client.WsClientManage.ClientSendMsg(bytes, req.Tos...)
-
-	res.ToSuccess(gin.H{})
 }
 
 // 给多个客户端发消息
@@ -41,9 +25,7 @@ func (h *HttpController) SendClients(ctx *gin.Context) {
 		return
 	}
 
-	bytes, _ := client.NewClientResponse(200, req.Msg, gin.H{"from": req.From, "msg": req.Msg}).GetByte()
-
-	client.WsClientManage.ClientSendMsg(bytes, req.Tos...)
+	service.SendClients(req.From, req.Tos, req.Msg)
 
 	res.ToSuccess(gin.H{})
 }
@@ -157,11 +139,9 @@ func (h *HttpController) OnlineList(ctx *gin.Context) {
 	if len(allClient) > 0 {
 		for _, c := range allClient {
 			id := c.GetID()
-			sid := strconv.FormatInt(id, 10)
-
-			list[sid] = gin.H{
-				"ip": c.GetIP(),
-				"id": c.GetID(),
+			list[id] = gin.H{
+				"addr": net.JoinHostPort(c.GetIP(), strconv.Itoa(c.GetPort())),
+				"id":   id,
 			}
 		}
 	}
@@ -182,7 +162,7 @@ func (h *HttpController) GroupList(ctx *gin.Context) {
 
 	var list []string
 
-	if req.ClientId > 0 {
+	if len(req.ClientId) > 0 {
 		getClient, ok := client.WsClientManage.GetClient(req.ClientId)
 		if !ok {
 			res.ToError(errcode.WsClientIdNotFound)

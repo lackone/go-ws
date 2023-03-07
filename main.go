@@ -27,12 +27,22 @@ func init() {
 	global.InitWsUpgrader()
 	//初始化雪化算法
 	global.InitSnowflakeNode()
+	//初始化主机IP
+	global.InitLocalIP()
+	//初始化etcd客户端
+	global.InitEtcdClient()
 }
 
 func main() {
-	go server.InitHttpServer()
+	//启动grpc
+	go server.InitGRPCServer()
 
+	//注册服务
+	server.RegisterGRPC()
+
+	//启动ws
 	go server.InitWsServer()
 
-	select {}
+	//启动http
+	server.InitHttpServer()
 }

@@ -28,13 +28,17 @@ func InitWsServer() {
 		if global.WsSetting.IsTLS {
 			if err := s.ListenAndServeTLS(global.WsSetting.TLSCertFile, global.WsSetting.TLSKeyFile); err != nil && err != http.ErrServerClosed {
 				fmt.Println("websocket listen error :", err.Error())
+				return
 			}
 		} else {
 			if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				fmt.Println("websocket listen error :", err.Error())
+				return
 			}
 		}
 	}()
+
+	fmt.Printf("websocket run [:%d] success \n", global.WsSetting.WsPort)
 
 	//监控信号，实现优雅关机
 	quit := make(chan os.Signal)

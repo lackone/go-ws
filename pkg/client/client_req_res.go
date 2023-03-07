@@ -23,6 +23,22 @@ func NewClientResponse(code int, msg string, data interface{}) *ClientResponse {
 	}
 }
 
+func NewOkClientRes(data interface{}) *ClientResponse {
+	return &ClientResponse{
+		Code: 200,
+		Msg:  "成功",
+		Data: data,
+	}
+}
+
+func NewErrClientRes(msg string, data interface{}) *ClientResponse {
+	return &ClientResponse{
+		Code: 500,
+		Msg:  msg,
+		Data: data,
+	}
+}
+
 func (r *ClientResponse) GetByte() ([]byte, error) {
 	data, err := json.Marshal(r)
 	if err != nil {

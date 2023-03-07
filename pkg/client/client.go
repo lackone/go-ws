@@ -12,7 +12,7 @@ import (
 )
 
 type Client struct {
-	id           int64               //客户端ID，自动分配
+	id           string              //客户端ID，自动分配
 	conn         *websocket.Conn     //ws连接
 	clientManage *ClientManage       //客户端管理
 	connectTime  int64               //首次连接时间
@@ -20,9 +20,10 @@ type Client struct {
 	groups       map[string]struct{} //客户加入的组
 	groupsLock   sync.RWMutex        //组锁
 	ip           string              //客户端IP，用于标识同一主机
+	port         int                 //端口
 }
 
-func NewClient(id int64, conn *websocket.Conn, clientManage *ClientManage) *Client {
+func NewClient(id string, conn *websocket.Conn, clientManage *ClientManage) *Client {
 	addrPort, _ := netip.ParseAddrPort(conn.RemoteAddr().String())
 
 	return &Client{
@@ -34,12 +35,29 @@ func NewClient(id int64, conn *websocket.Conn, clientManage *ClientManage) *Clie
 		groups:       make(map[string]struct{}),
 		groupsLock:   sync.RWMutex{},
 		ip:           addrPort.Addr().String(),
+		port:         int(addrPort.Port()),
 	}
+}
+
+// 关闭
+func (c *Client) Close() {
+	c.clientManage.disconnectChan <- c
+	c.conn.Close()
+}
+
+// 客户端ID
+func (c *Client) GetID() string {
+	return c.id
 }
 
 // 获取ip
 func (c *Client) GetIP() string {
 	return c.ip
+}
+
+// 端口
+func (c *Client) GetPort() int {
+	return c.port
 }
 
 // 加入组
@@ -57,7 +75,7 @@ func (c *Client) DelGroup(group string) {
 }
 
 // 所有组
-func (c *Client) AllGroup() []string {
+func (c *Client) GroupList() []string {
 	c.groupsLock.RLock()
 	defer c.groupsLock.RUnlock()
 	list := make([]string, 0)
@@ -107,7 +125,7 @@ func (c *Client) ProcessMessage(msg []byte) {
 
 	//解析请求
 	if err := json.Unmarshal(msg, req); err != nil {
-		bytes, _ := NewClientResponse(500, err.Error(), nil).GetByte()
+		bytes, _ := NewErrClientRes(err.Error(), nil).GetByte()
 		c.SendMsg(bytes)
 		return
 	}
@@ -115,7 +133,7 @@ func (c *Client) ProcessMessage(msg []byte) {
 	//处理请求数据
 	reqData, err := json.Marshal(req.Data)
 	if err != nil {
-		bytes, _ := NewClientResponse(500, err.Error(), nil).GetByte()
+		bytes, _ := NewErrClientRes(err.Error(), nil).GetByte()
 		c.SendMsg(bytes)
 		return
 	}
@@ -123,7 +141,7 @@ func (c *Client) ProcessMessage(msg []byte) {
 	//获取调用方法
 	handler, ok := WsClientHandler.GetHandler(req.Url)
 	if !ok {
-		bytes, _ := NewClientResponse(500, req.Url+" handler not found", nil).GetByte()
+		bytes, _ := NewErrClientRes(req.Url+" handler not found", nil).GetByte()
 		c.SendMsg(bytes)
 		return
 	}
@@ -190,28 +208,4 @@ func (c *Client) WriteLoop() {
 			}
 		}
 	}
-}
-
-// 关闭
-func (c *Client) Close() {
-	c.clientManage.disconnectChan <- c
-	c.conn.Close()
-}
-
-// 客户端ID
-func (c *Client) GetID() int64 {
-	return c.id
-}
-
-// 组列表
-func (c *Client) GroupList() []string {
-	list := make([]string, 0)
-
-	if len(c.groups) > 0 {
-		for k, _ := range c.groups {
-			list = append(list, k)
-		}
-	}
-
-	return list
 }

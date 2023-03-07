@@ -31,6 +31,8 @@ ws:
   TLSKeyFile:
   ReadBufferSize: 1024
   WriteBufferSize: 1024
+  #aes加密key
+  AesKey: JKq0QwL7wjU06sca
 
 grpc:
   #grpc的端口

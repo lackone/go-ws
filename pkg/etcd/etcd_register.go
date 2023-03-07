@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"time"
 )
 
 type EtcdRegister struct {
@@ -11,6 +12,7 @@ type EtcdRegister struct {
 	lease          clientv3.Lease
 	leaseId        clientv3.LeaseID
 	leaseKeepAlive <-chan *clientv3.LeaseKeepAliveResponse
+	cancelFn       context.CancelFunc
 }
 
 func NewEtcdRegister(client *clientv3.Client, ttl int64) (*EtcdRegister, error) {
@@ -31,12 +33,15 @@ func NewEtcdRegister(client *clientv3.Client, ttl int64) (*EtcdRegister, error) 
 func (e *EtcdRegister) setLease(ttl int64) error {
 	newLease := clientv3.NewLease(e.client)
 
-	lease, err := newLease.Grant(context.Background(), ttl)
+	timeout, timeoutFn := context.WithTimeout(context.Background(), time.Second*3)
+	lease, err := newLease.Grant(timeout, ttl)
 	if err != nil {
+		timeoutFn()
 		return err
 	}
 
-	alive, err := newLease.KeepAlive(context.Background(), lease.ID)
+	cancel, cancelFn := context.WithCancel(context.Background())
+	alive, err := newLease.KeepAlive(cancel, lease.ID)
 	if err != nil {
 		return err
 	}
@@ -44,6 +49,7 @@ func (e *EtcdRegister) setLease(ttl int64) error {
 	e.lease = newLease
 	e.leaseId = lease.ID
 	e.leaseKeepAlive = alive
+	e.cancelFn = cancelFn
 
 	return nil
 }
@@ -51,12 +57,12 @@ func (e *EtcdRegister) setLease(ttl int64) error {
 // 监听续租情况
 func (e *EtcdRegister) listenLease() {
 	for {
-		v, ok := <-e.leaseKeepAlive
+		_, ok := <-e.leaseKeepAlive
 		if !ok {
 			fmt.Println("关闭续租")
 			return
 		}
-		fmt.Println("续租成功", v)
+		//fmt.Println("续租成功", v)
 	}
 }
 
@@ -76,6 +82,7 @@ func (e *EtcdRegister) UnRegService(key string) error {
 
 // 撤销租约
 func (e *EtcdRegister) RevokeLease() error {
+	e.cancelFn()
 	_, err := e.lease.Revoke(context.Background(), e.leaseId)
 	return err
 }

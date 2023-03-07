@@ -27,13 +27,17 @@ func InitHttpServer() {
 		if global.HttpSetting.IsTLS {
 			if err := s.ListenAndServeTLS(global.HttpSetting.TLSCertFile, global.HttpSetting.TLSKeyFile); err != nil && err != http.ErrServerClosed {
 				fmt.Println("http listen error :", err.Error())
+				return
 			}
 		} else {
 			if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				fmt.Println("http listen error :", err.Error())
+				return
 			}
 		}
 	}()
+
+	fmt.Printf("http run [:%d] success \n", global.HttpSetting.HttpPort)
 
 	//监控信号，实现优雅关机
 	quit := make(chan os.Signal)

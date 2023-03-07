@@ -7,6 +7,7 @@ import (
 	"github.com/lackone/go-ws/pkg/app"
 	"github.com/lackone/go-ws/pkg/client"
 	"github.com/lackone/go-ws/pkg/errcode"
+	"github.com/lackone/go-ws/pkg/utils"
 	"time"
 )
 
@@ -25,12 +26,14 @@ func (w *WsController) Ws(ctx *gin.Context) {
 
 	fmt.Printf("client[%s] connect success ...\n", conn.RemoteAddr().String())
 
+	//生成雪花ID
+	snowflakeId := global.SnowflakeNode.Generate().Int64()
 	//生成客户端ID
-	clientId := global.SnowflakeNode.Generate().Int64()
+	clientId := utils.GenerateClientId(global.LocalIP, global.GrpcSetting.GrpcPort, snowflakeId, global.WsSetting.AesKey)
 
 	//创建客户端
 	wsClient := client.NewClient(clientId, conn, client.WsClientManage)
-
+	//向客户端发送连接消息
 	wsClient.SendCommonMsg(200, "connect success", gin.H{"client_id": clientId, "connect_time": time.Now().Format(time.RFC3339)})
 
 	//添加客户端

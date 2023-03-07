@@ -7,27 +7,27 @@ import (
 var WsClientManage = NewClientManage()
 
 type ClientManage struct {
-	clients        map[int64]*Client             //所有的客户端
-	clientsLock    sync.RWMutex                  //客户端读写锁
-	broadcast      chan []byte                   //广播通道
-	connectChan    chan *Client                  //连接通道
-	disconnectChan chan *Client                  //断开通道
-	groups         map[string]map[int64]struct{} //同一组下面有哪些客户端
-	groupsLock     sync.RWMutex                  //组锁
-	machines       map[string]map[int64]struct{} //同一系统下有哪些客户端
-	machinesLock   sync.RWMutex                  //系统锁
+	clients        map[string]*Client             //所有的客户端
+	clientsLock    sync.RWMutex                   //客户端读写锁
+	broadcast      chan []byte                    //广播通道
+	connectChan    chan *Client                   //连接通道
+	disconnectChan chan *Client                   //断开通道
+	groups         map[string]map[string]struct{} //同一组下面有哪些客户端
+	groupsLock     sync.RWMutex                   //组锁
+	machines       map[string]map[string]struct{} //同一系统下有哪些客户端
+	machinesLock   sync.RWMutex                   //系统锁
 }
 
 func NewClientManage() *ClientManage {
 	return &ClientManage{
-		clients:        make(map[int64]*Client),
+		clients:        make(map[string]*Client),
 		clientsLock:    sync.RWMutex{},
 		broadcast:      make(chan []byte, 256),
 		connectChan:    make(chan *Client),
 		disconnectChan: make(chan *Client),
-		groups:         make(map[string]map[int64]struct{}),
+		groups:         make(map[string]map[string]struct{}),
 		groupsLock:     sync.RWMutex{},
-		machines:       make(map[string]map[int64]struct{}),
+		machines:       make(map[string]map[string]struct{}),
 		machinesLock:   sync.RWMutex{},
 	}
 }
@@ -65,11 +65,9 @@ func (m *ClientManage) AddGroupByClient(c *Client, groups ...string) {
 	if len(groups) > 0 {
 		for _, group := range groups {
 			if _, ok := m.groups[group]; !ok {
-				m.groups[group] = make(map[int64]struct{})
+				m.groups[group] = make(map[string]struct{})
 			}
-
 			m.groups[group][c.id] = struct{}{}
-
 			c.AddGroup(group)
 		}
 	}
@@ -80,7 +78,7 @@ func (m *ClientManage) DelAllGroupByClient(c *Client) {
 	m.groupsLock.Lock()
 	defer m.groupsLock.Unlock()
 
-	groupList := c.AllGroup()
+	groupList := c.GroupList()
 
 	if len(groupList) > 0 {
 		for _, group := range groupList {
@@ -115,7 +113,7 @@ func (m *ClientManage) AddMachineByClient(c *Client) {
 	ip := c.GetIP()
 
 	if _, ok := m.machines[ip]; !ok {
-		m.machines[ip] = make(map[int64]struct{})
+		m.machines[ip] = make(map[string]struct{})
 	}
 
 	m.machines[ip][c.id] = struct{}{}
@@ -177,7 +175,7 @@ func (m *ClientManage) MachineSendMsg(msg []byte, ips ...string) {
 }
 
 // 给多个客户端发消息
-func (m *ClientManage) ClientSendMsg(msg []byte, clientIds ...int64) {
+func (m *ClientManage) ClientSendMsg(msg []byte, clientIds ...string) {
 	if len(clientIds) > 0 {
 		for _, id := range clientIds {
 			if _, ok := m.clients[id]; ok {
@@ -205,7 +203,7 @@ func (m *ClientManage) AddClient(c *Client) {
 }
 
 // 所有客户端
-func (m *ClientManage) AllClient() map[int64]*Client {
+func (m *ClientManage) AllClient() map[string]*Client {
 	m.clientsLock.RLock()
 	defer m.clientsLock.RUnlock()
 	return m.clients
@@ -227,7 +225,9 @@ func (m *ClientManage) DelClient(c *Client) {
 }
 
 // 获取客户端
-func (m *ClientManage) GetClient(id int64) (*Client, bool) {
+func (m *ClientManage) GetClient(id string) (*Client, bool) {
+	m.clientsLock.RLock()
+	defer m.clientsLock.RUnlock()
 	c, ok := m.clients[id]
 	return c, ok
 }
@@ -236,19 +236,18 @@ func (m *ClientManage) GetClient(id int64) (*Client, bool) {
 func (m *ClientManage) GroupList() []string {
 	m.groupsLock.RLock()
 	defer m.groupsLock.RUnlock()
-
 	list := make([]string, 0)
-
 	if len(m.groups) > 0 {
 		for k, _ := range m.groups {
 			list = append(list, k)
 		}
 	}
-
 	return list
 }
 
 // 获取机器列表
-func (m *ClientManage) GetMachines() map[string]map[int64]struct{} {
+func (m *ClientManage) GetMachines() map[string]map[string]struct{} {
+	m.machinesLock.RLock()
+	defer m.machinesLock.RUnlock()
 	return m.machines
 }
