@@ -126,7 +126,7 @@ func (m *ClientManage) AddMachineByClient(c *Client) {
 		"addr":        c.GetAddr(),
 		"connectTime": c.GetConnectTime(),
 	})
-	global.EtcdKV.Put(global.ETCD_WS_MACHINES+ip+"/"+c.GetID(), string(val))
+	global.EtcdKV.Put(global.ETCD_WS_MACHINES+"/"+global.LocalIP+"/"+ip+"/"+c.GetID(), string(val))
 }
 
 // 把客户端从系统下删除
@@ -141,7 +141,7 @@ func (m *ClientManage) DelMachineByClient(c *Client) {
 			delete(m.machines[ip], c.id)
 		}
 
-		global.EtcdKV.Del(global.ETCD_WS_MACHINES + ip + "/" + c.GetID())
+		global.EtcdKV.Del(global.ETCD_WS_MACHINES + "/" + global.LocalIP + "/" + ip + "/" + c.GetID())
 	}
 }
 
@@ -218,7 +218,7 @@ func (m *ClientManage) AddClient(c *Client) {
 		"addr":        c.GetAddr(),
 		"connectTime": c.GetConnectTime(),
 	})
-	global.EtcdKV.Put(global.ETCD_WS_ACCOUNTS+c.id, string(val))
+	global.EtcdKV.Put(global.ETCD_WS_ACCOUNTS+"/"+global.LocalIP+"/"+c.id, string(val))
 }
 
 // 所有客户端
@@ -242,7 +242,7 @@ func (m *ClientManage) DelClient(c *Client) {
 	delete(m.clients, c.id)
 	close(c.send)
 
-	global.EtcdKV.Del(global.ETCD_WS_ACCOUNTS + c.id)
+	global.EtcdKV.Del(global.ETCD_WS_ACCOUNTS + "/" + global.LocalIP + "/" + c.id)
 }
 
 // 获取客户端

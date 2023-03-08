@@ -7,6 +7,7 @@ import (
 	"github.com/lackone/go-ws/global"
 	"github.com/lackone/go-ws/pkg/client"
 	"github.com/lackone/go-ws/pkg/proto/im"
+	"go.uber.org/zap"
 )
 
 type IMService struct {
@@ -14,6 +15,8 @@ type IMService struct {
 }
 
 func (i *IMService) SendClients(ctx context.Context, req *im.SendClientsReq) (*im.CommonRes, error) {
+	global.Logger.Info("SendClients", zap.Any("req", req), zap.String("ip", global.LocalIP))
+
 	res := &im.CommonRes{
 		Code: 200,
 		Msg:  "成功",
@@ -37,6 +40,8 @@ func (i *IMService) SendClients(ctx context.Context, req *im.SendClientsReq) (*i
 }
 
 func (i *IMService) SendGroups(ctx context.Context, req *im.SendGroupsReq) (*im.CommonRes, error) {
+	global.Logger.Info("SendGroups", zap.Any("req", req), zap.String("ip", global.LocalIP))
+
 	res := &im.CommonRes{
 		Code: 200,
 		Msg:  "成功",
@@ -60,6 +65,8 @@ func (i *IMService) SendGroups(ctx context.Context, req *im.SendGroupsReq) (*im.
 }
 
 func (i *IMService) SendMachines(ctx context.Context, req *im.SendMachinesReq) (*im.CommonRes, error) {
+	global.Logger.Info("SendMachines", zap.Any("req", req), zap.String("ip", global.LocalIP))
+
 	res := &im.CommonRes{
 		Code: 200,
 		Msg:  "成功",
@@ -83,6 +90,8 @@ func (i *IMService) SendMachines(ctx context.Context, req *im.SendMachinesReq) (
 }
 
 func (i *IMService) Broadcast(ctx context.Context, req *im.BroadcastReq) (*im.CommonRes, error) {
+	global.Logger.Info("Broadcast", zap.Any("req", req), zap.String("ip", global.LocalIP))
+
 	res := &im.CommonRes{
 		Code: 200,
 		Msg:  "成功",
@@ -106,6 +115,8 @@ func (i *IMService) Broadcast(ctx context.Context, req *im.BroadcastReq) (*im.Co
 }
 
 func (i *IMService) AddGroup(ctx context.Context, req *im.AddGroupReq) (*im.CommonRes, error) {
+	global.Logger.Info("AddGroup", zap.Any("req", req), zap.String("ip", global.LocalIP))
+
 	res := &im.CommonRes{
 		Code: 200,
 		Msg:  "成功",
@@ -130,6 +141,8 @@ func (i *IMService) AddGroup(ctx context.Context, req *im.AddGroupReq) (*im.Comm
 }
 
 func (i *IMService) DelGroup(ctx context.Context, req *im.DelGroupReq) (*im.CommonRes, error) {
+	global.Logger.Info("DelGroup", zap.Any("req", req), zap.String("ip", global.LocalIP))
+
 	res := &im.CommonRes{
 		Code: 200,
 		Msg:  "成功",
@@ -154,6 +167,8 @@ func (i *IMService) DelGroup(ctx context.Context, req *im.DelGroupReq) (*im.Comm
 }
 
 func (i *IMService) OnlineList(ctx context.Context, req *im.OnlineListReq) (*im.CommonRes, error) {
+	global.Logger.Info("OnlineList", zap.Any("req", req), zap.String("ip", global.LocalIP))
+
 	res := &im.CommonRes{
 		Code: 200,
 		Msg:  "成功",
@@ -179,6 +194,8 @@ func (i *IMService) OnlineList(ctx context.Context, req *im.OnlineListReq) (*im.
 }
 
 func (i *IMService) GroupList(ctx context.Context, req *im.GroupListReq) (*im.CommonRes, error) {
+	global.Logger.Info("GroupList", zap.Any("req", req), zap.String("ip", global.LocalIP))
+
 	res := &im.CommonRes{
 		Code: 200,
 		Msg:  "成功",
@@ -204,6 +221,8 @@ func (i *IMService) GroupList(ctx context.Context, req *im.GroupListReq) (*im.Co
 }
 
 func (i *IMService) MachineList(ctx context.Context, req *im.MachineListReq) (*im.CommonRes, error) {
+	global.Logger.Info("MachineList", zap.Any("req", req), zap.String("ip", global.LocalIP))
+
 	res := &im.CommonRes{
 		Code: 200,
 		Msg:  "成功",
