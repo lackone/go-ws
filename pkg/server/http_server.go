@@ -6,16 +6,20 @@ import (
 	"github.com/lackone/go-ws/global"
 	"github.com/lackone/go-ws/routes"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
-func InitHttpServer() {
+type HttpServer struct {
+	server *http.Server
+}
+
+func NewHttpServer() *HttpServer {
+	return &HttpServer{}
+}
+
+func (h *HttpServer) start() {
 	router := routes.NewHttpRouter()
 
-	s := http.Server{
+	h.server = &http.Server{
 		Addr:           fmt.Sprintf(":%d", global.HttpSetting.HttpPort),
 		Handler:        router,
 		ReadTimeout:    global.HttpSetting.HttpReadTimeout,
@@ -25,32 +29,30 @@ func InitHttpServer() {
 
 	go func() {
 		if global.HttpSetting.IsTLS {
-			if err := s.ListenAndServeTLS(global.HttpSetting.TLSCertFile, global.HttpSetting.TLSKeyFile); err != nil && err != http.ErrServerClosed {
-				fmt.Println("http listen error :", err.Error())
-				return
+			if err := h.server.ListenAndServeTLS(global.HttpSetting.TLSCertFile, global.HttpSetting.TLSKeyFile); err != nil && err != http.ErrServerClosed {
+				panic(err)
 			}
 		} else {
-			if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				fmt.Println("http listen error :", err.Error())
-				return
+			if err := h.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				panic(err)
 			}
 		}
 	}()
 
-	fmt.Printf("http run [:%d] success \n", global.HttpSetting.HttpPort)
+	fmt.Printf("http[:%d] success \n", global.HttpSetting.HttpPort)
+}
 
-	//监控信号，实现优雅关机
-	quit := make(chan os.Signal)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	fmt.Println("http server shutdown ... ...")
+func (h *HttpServer) Run() {
+	h.start()
+}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
+func (h *HttpServer) Shutdown(ctx context.Context) error {
+	fmt.Printf("http[:%d] shutdown \n", global.HttpSetting.HttpPort)
 
-	if err := s.Shutdown(ctx); err != nil {
-		fmt.Println("http server shutdown error :", err)
+	if err := h.server.Shutdown(ctx); err != nil {
+		return err
 	}
 
-	fmt.Println("http server exit ... ...")
+	fmt.Printf("http[:%d] exit \n", global.HttpSetting.HttpPort)
+	return nil
 }

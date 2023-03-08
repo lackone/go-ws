@@ -7,8 +7,6 @@ import (
 	"github.com/lackone/go-ws/global"
 	"github.com/lackone/go-ws/pkg/client"
 	"github.com/lackone/go-ws/pkg/proto/im"
-	"net"
-	"strconv"
 )
 
 type IMService struct {
@@ -169,7 +167,7 @@ func (i *IMService) OnlineList(ctx context.Context, req *im.OnlineListReq) (*im.
 		for _, c := range allClient {
 			id := c.GetID()
 			list[id] = gin.H{
-				"addr": net.JoinHostPort(c.GetIP(), strconv.Itoa(c.GetPort())),
+				"addr": c.GetAddr(),
 				"id":   id,
 			}
 		}
@@ -211,7 +209,7 @@ func (i *IMService) MachineList(ctx context.Context, req *im.MachineListReq) (*i
 		Msg:  "成功",
 	}
 
-	machines := client.WsClientManage.GetMachines()
+	machines := client.WsClientManage.MachineList()
 
 	res.Data, _ = json.Marshal(machines)
 

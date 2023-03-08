@@ -1,9 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
 	"github.com/lackone/go-ws/global"
 	"github.com/lackone/go-ws/pkg/server"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 var (
@@ -35,14 +41,41 @@ func init() {
 
 func main() {
 	//启动grpc
-	go server.InitGRPCServer()
-
-	//注册服务
-	server.RegisterGRPC()
+	grpc := server.NewGRPCServer()
+	go grpc.Run()
 
 	//启动ws
-	go server.InitWsServer()
+	ws := server.NewWSServer()
+	go ws.Run()
 
 	//启动http
-	server.InitHttpServer()
+	http := server.NewHttpServer()
+	go http.Run()
+
+	//监控信号，实现优雅关机
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	fmt.Println("shutdown ... ... ...")
+
+	ctx1, fn1 := context.WithTimeout(context.Background(), 10*time.Second)
+	defer fn1()
+	if err := grpc.Shutdown(ctx1); err != nil {
+		fmt.Println("grpc shutdown error :", err)
+	}
+
+	ctx2, fn2 := context.WithTimeout(context.Background(), 10*time.Second)
+	defer fn2()
+	if err := ws.Shutdown(ctx2); err != nil {
+		fmt.Println("websocket shutdown error :", err)
+	}
+
+	ctx3, fn3 := context.WithTimeout(context.Background(), 10*time.Second)
+	defer fn3()
+	if err := http.Shutdown(ctx3); err != nil {
+		fmt.Println("http shutdown error :", err)
+	}
+
+	fmt.Println("exit ... ... ...")
 }

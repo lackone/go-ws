@@ -1,6 +1,9 @@
 package client
 
 import (
+	"encoding/json"
+	"github.com/gin-gonic/gin"
+	"github.com/lackone/go-ws/global"
 	"sync"
 )
 
@@ -14,7 +17,7 @@ type ClientManage struct {
 	disconnectChan chan *Client                   //断开通道
 	groups         map[string]map[string]struct{} //同一组下面有哪些客户端
 	groupsLock     sync.RWMutex                   //组锁
-	machines       map[string]map[string]struct{} //同一系统下有哪些客户端
+	machines       map[string]map[string]struct{} //同一IP下有哪些客户端
 	machinesLock   sync.RWMutex                   //系统锁
 }
 
@@ -117,6 +120,13 @@ func (m *ClientManage) AddMachineByClient(c *Client) {
 	}
 
 	m.machines[ip][c.id] = struct{}{}
+
+	val, _ := json.Marshal(gin.H{
+		"id":          c.GetID(),
+		"addr":        c.GetAddr(),
+		"connectTime": c.GetConnectTime(),
+	})
+	global.EtcdKV.Put(global.ETCD_WS_MACHINES+ip+"/"+c.GetID(), string(val))
 }
 
 // 把客户端从系统下删除
@@ -130,6 +140,8 @@ func (m *ClientManage) DelMachineByClient(c *Client) {
 		if _, ok := m.machines[ip]; ok {
 			delete(m.machines[ip], c.id)
 		}
+
+		global.EtcdKV.Del(global.ETCD_WS_MACHINES + ip + "/" + c.GetID())
 	}
 }
 
@@ -200,6 +212,13 @@ func (m *ClientManage) AddClient(c *Client) {
 	m.clientsLock.Lock()
 	defer m.clientsLock.Unlock()
 	m.clients[c.id] = c
+
+	val, _ := json.Marshal(gin.H{
+		"id":          c.GetID(),
+		"addr":        c.GetAddr(),
+		"connectTime": c.GetConnectTime(),
+	})
+	global.EtcdKV.Put(global.ETCD_WS_ACCOUNTS+c.id, string(val))
 }
 
 // 所有客户端
@@ -222,6 +241,8 @@ func (m *ClientManage) DelClient(c *Client) {
 	defer m.clientsLock.Unlock()
 	delete(m.clients, c.id)
 	close(c.send)
+
+	global.EtcdKV.Del(global.ETCD_WS_ACCOUNTS + c.id)
 }
 
 // 获取客户端
@@ -246,8 +267,14 @@ func (m *ClientManage) GroupList() []string {
 }
 
 // 获取机器列表
-func (m *ClientManage) GetMachines() map[string]map[string]struct{} {
+func (m *ClientManage) MachineList() []string {
 	m.machinesLock.RLock()
 	defer m.machinesLock.RUnlock()
-	return m.machines
+	list := make([]string, 0)
+	if len(m.machines) > 0 {
+		for k, _ := range m.machines {
+			list = append(list, k)
+		}
+	}
+	return list
 }

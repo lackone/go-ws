@@ -6,17 +6,20 @@ import (
 	"github.com/lackone/go-ws/global"
 	"github.com/lackone/go-ws/routes"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
-// 初始化ws服务
-func InitWsServer() {
+type WSServer struct {
+	server *http.Server
+}
+
+func NewWSServer() *WSServer {
+	return &WSServer{}
+}
+
+func (w *WSServer) start() {
 	router := routes.NewWsRouter()
 
-	s := http.Server{
+	w.server = &http.Server{
 		Addr:           fmt.Sprintf(":%d", global.WsSetting.WsPort),
 		Handler:        router,
 		ReadTimeout:    global.WsSetting.HttpReadTimeout,
@@ -26,32 +29,30 @@ func InitWsServer() {
 
 	go func() {
 		if global.WsSetting.IsTLS {
-			if err := s.ListenAndServeTLS(global.WsSetting.TLSCertFile, global.WsSetting.TLSKeyFile); err != nil && err != http.ErrServerClosed {
-				fmt.Println("websocket listen error :", err.Error())
-				return
+			if err := w.server.ListenAndServeTLS(global.WsSetting.TLSCertFile, global.WsSetting.TLSKeyFile); err != nil && err != http.ErrServerClosed {
+				panic(err)
 			}
 		} else {
-			if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				fmt.Println("websocket listen error :", err.Error())
-				return
+			if err := w.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				panic(err)
 			}
 		}
 	}()
 
-	fmt.Printf("websocket run [:%d] success \n", global.WsSetting.WsPort)
+	fmt.Printf("websocket[:%d] success \n", global.WsSetting.WsPort)
+}
 
-	//监控信号，实现优雅关机
-	quit := make(chan os.Signal)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	fmt.Println("websocket server shutdown ... ...")
+func (w *WSServer) Run() {
+	w.start()
+}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
+func (w *WSServer) Shutdown(ctx context.Context) error {
+	fmt.Printf("websocket[:%d] shutdown \n", global.WsSetting.WsPort)
 
-	if err := s.Shutdown(ctx); err != nil {
-		fmt.Println("websocket server shutdown error :", err)
+	if err := w.server.Shutdown(ctx); err != nil {
+		return err
 	}
 
-	fmt.Println("websocket server exit ... ...")
+	fmt.Printf("websocket[:%d] exit \n", global.WsSetting.WsPort)
+	return nil
 }

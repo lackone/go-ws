@@ -6,7 +6,9 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/lackone/go-ws/global"
 	"go.uber.org/zap"
+	"net"
 	"net/netip"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -43,6 +45,16 @@ func NewClient(id string, conn *websocket.Conn, clientManage *ClientManage) *Cli
 func (c *Client) Close() {
 	c.clientManage.disconnectChan <- c
 	c.conn.Close()
+}
+
+// 地址
+func (c *Client) GetAddr() string {
+	return net.JoinHostPort(c.GetIP(), strconv.Itoa(c.GetPort()))
+}
+
+// 连接时间
+func (c *Client) GetConnectTime() string {
+	return time.Unix(c.connectTime, 0).Format(time.RFC3339)
 }
 
 // 客户端ID

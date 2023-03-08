@@ -23,6 +23,18 @@ func (e *EtcdKV) Put(key string, val string) error {
 
 func (e *EtcdKV) Get(key string) (*clientv3.GetResponse, error) {
 	kv := clientv3.NewKV(e.client)
-	get, err := kv.Get(context.Background(), key)
-	return get, err
+	res, err := kv.Get(context.Background(), key)
+	return res, err
+}
+
+func (e *EtcdKV) Del(key string) (*clientv3.DeleteResponse, error) {
+	kv := clientv3.NewKV(e.client)
+	res, err := kv.Delete(context.Background(), key)
+	return res, err
+}
+
+func (e *EtcdKV) DelAll(prefix string) (*clientv3.DeleteResponse, error) {
+	kv := clientv3.NewKV(e.client)
+	res, err := kv.Delete(context.Background(), prefix, clientv3.WithPrefix())
+	return res, err
 }

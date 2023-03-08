@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"github.com/lackone/go-ws/global"
 	"github.com/lackone/go-ws/pkg/etcd"
@@ -8,65 +9,86 @@ import (
 	"github.com/lackone/go-ws/pkg/service"
 	"google.golang.org/grpc"
 	"net"
-	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 )
 
-func InitGRPCServer() {
-	if global.IsCluster() {
-		listen, err := net.Listen("tcp", fmt.Sprintf(":%d", global.GrpcSetting.GrpcPort))
+type GRPCServer struct {
+	server *grpc.Server
+}
+
+func NewGRPCServer() *GRPCServer {
+	return &GRPCServer{}
+}
+
+func (g *GRPCServer) start() {
+	listen, err := net.Listen("tcp", fmt.Sprintf(":%d", global.GrpcSetting.GrpcPort))
+	if err != nil {
+		panic(err)
+	}
+	g.server = grpc.NewServer()
+
+	im.RegisterIMServiceServer(g.server, &service.IMService{})
+
+	go func() {
+		err = g.server.Serve(listen)
 		if err != nil {
-			fmt.Println("grpc listen error : ", err.Error())
-			return
+			panic(err)
 		}
-		server := grpc.NewServer()
+	}()
 
-		im.RegisterIMServiceServer(server, &service.IMService{})
+	fmt.Printf("grpc[:%d] success \n", global.GrpcSetting.GrpcPort)
+}
 
-		go func() {
-			err = server.Serve(listen)
-			if err != nil {
-				fmt.Println("grpc serve error : ", err.Error())
-				return
-			}
-		}()
+// 运行
+func (g *GRPCServer) Run() {
+	if global.IsCluster() {
+		g.start()
 
-		fmt.Printf("grpc run [:%d] success \n", global.GrpcSetting.GrpcPort)
-
-		//监控信号，实现优雅关机
-		quit := make(chan os.Signal)
-		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-		<-quit
-		fmt.Println("grpc server shutdown ... ...")
-
-		server.GracefulStop()
-
-		fmt.Println("grpc server exit ... ...")
+		g.registerGRPC()
 	}
 }
 
-var WsEtcdReg *etcd.EtcdRegister
-var WsEtcdDis *etcd.EtcdDiscover
+// 退出
+func (g *GRPCServer) Shutdown(ctx context.Context) error {
+	ok := make(chan struct{})
+
+	go func(ok chan struct{}) {
+		fmt.Printf("grpc[:%d] shutdown \n", global.GrpcSetting.GrpcPort)
+
+		g.server.GracefulStop()
+
+		g.clearEtcdData()
+
+		fmt.Printf("grpc[:%d] exit \n", global.GrpcSetting.GrpcPort)
+
+		ok <- struct{}{}
+	}(ok)
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-ok:
+		return nil
+	}
+}
+
+// 清除ETCD中的数据
+func (g *GRPCServer) clearEtcdData() {
+	global.EtcdKV.DelAll(global.ETCD_WS_ACCOUNTS)
+	global.EtcdKV.DelAll(global.ETCD_WS_MACHINES)
+}
 
 // 在ETCD注册服务
-func RegisterGRPC() {
+func (g *GRPCServer) registerGRPC() {
 	if global.IsCluster() {
-		var err error
-		WsEtcdReg, err = etcd.NewEtcdRegister(global.EtcdClient, 10)
+		reg, err := etcd.NewEtcdRegister(global.EtcdClient, 10)
 		if err != nil {
 			panic(err)
 		}
 		addr := net.JoinHostPort(global.LocalIP, strconv.Itoa(global.GrpcSetting.GrpcPort))
-		err = WsEtcdReg.RegService(global.ETCD_WS_SERVERS+addr, addr)
+		err = reg.RegService(global.ETCD_WS_SERVICES+addr, addr)
 		if err != nil {
 			panic(err)
 		}
-		WsEtcdDis, err = etcd.NewEtcdDiscover(global.EtcdClient, global.ETCD_WS_SERVERS)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println(WsEtcdDis.ServiceList())
 	}
 }

@@ -3,12 +3,9 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/lackone/go-ws/pkg/app"
-	"github.com/lackone/go-ws/pkg/client"
 	"github.com/lackone/go-ws/pkg/errcode"
 	"github.com/lackone/go-ws/pkg/request"
 	"github.com/lackone/go-ws/pkg/service"
-	"net"
-	"strconv"
 )
 
 type HttpController struct {
@@ -25,7 +22,11 @@ func (h *HttpController) SendClients(ctx *gin.Context) {
 		return
 	}
 
-	service.SendClients(req.From, req.Tos, req.Msg)
+	err := service.SendClients(req.From, req.Tos, req.Msg)
+	if err != nil {
+		res.ToError(errcode.ServerError.WithDetails(err.Error()))
+		return
+	}
 
 	res.ToSuccess(gin.H{})
 }
@@ -41,9 +42,11 @@ func (h *HttpController) SendGroups(ctx *gin.Context) {
 		return
 	}
 
-	bytes, _ := client.NewClientResponse(200, req.Msg, gin.H{"from": req.From, "msg": req.Msg}).GetByte()
-
-	client.WsClientManage.GroupSendMsg(bytes, req.Groups...)
+	err := service.SendGroups(req.From, req.Groups, req.Msg)
+	if err != nil {
+		res.ToError(errcode.ServerError.WithDetails(err.Error()))
+		return
+	}
 
 	res.ToSuccess(gin.H{})
 }
@@ -59,9 +62,11 @@ func (h *HttpController) SendMachines(ctx *gin.Context) {
 		return
 	}
 
-	bytes, _ := client.NewClientResponse(200, req.Msg, gin.H{"from": req.From, "msg": req.Msg}).GetByte()
-
-	client.WsClientManage.MachineSendMsg(bytes, req.Ips...)
+	err := service.SendMachines(req.From, req.Ips, req.Msg)
+	if err != nil {
+		res.ToError(errcode.ServerError.WithDetails(err.Error()))
+		return
+	}
 
 	res.ToSuccess(gin.H{})
 }
@@ -77,9 +82,11 @@ func (h *HttpController) Broadcast(ctx *gin.Context) {
 		return
 	}
 
-	bytes, _ := client.NewClientResponse(200, req.Msg, gin.H{"from": req.From, "msg": req.Msg}).GetByte()
-
-	client.WsClientManage.Broadcast(bytes)
+	err := service.Broadcast(req.From, req.Msg)
+	if err != nil {
+		res.ToError(errcode.ServerError.WithDetails(err.Error()))
+		return
+	}
 
 	res.ToSuccess(gin.H{})
 }
@@ -95,13 +102,11 @@ func (h *HttpController) AddGroup(ctx *gin.Context) {
 		return
 	}
 
-	getClient, ok := client.WsClientManage.GetClient(req.ClientId)
-	if !ok {
-		res.ToError(errcode.WsClientIdNotFound)
+	err := service.AddGroup(req.ClientId, req.Groups)
+	if err != nil {
+		res.ToError(errcode.ServerError.WithDetails(err.Error()))
 		return
 	}
-
-	client.WsClientManage.AddGroupByClient(getClient, req.Groups...)
 
 	res.ToSuccess(gin.H{})
 }
@@ -117,13 +122,11 @@ func (h *HttpController) DelGroup(ctx *gin.Context) {
 		return
 	}
 
-	getClient, ok := client.WsClientManage.GetClient(req.ClientId)
-	if !ok {
-		res.ToError(errcode.WsClientIdNotFound)
+	err := service.DelGroup(req.ClientId, req.Groups)
+	if err != nil {
+		res.ToError(errcode.ServerError.WithDetails(err.Error()))
 		return
 	}
-
-	client.WsClientManage.DelGroupByClient(getClient, req.Groups...)
 
 	res.ToSuccess(gin.H{})
 }
@@ -132,18 +135,10 @@ func (h *HttpController) DelGroup(ctx *gin.Context) {
 func (h *HttpController) OnlineList(ctx *gin.Context) {
 	res := app.NewResponse(ctx)
 
-	allClient := client.WsClientManage.AllClient()
-
-	list := gin.H{}
-
-	if len(allClient) > 0 {
-		for _, c := range allClient {
-			id := c.GetID()
-			list[id] = gin.H{
-				"addr": net.JoinHostPort(c.GetIP(), strconv.Itoa(c.GetPort())),
-				"id":   id,
-			}
-		}
+	list, err := service.OnlineList()
+	if err != nil {
+		res.ToError(errcode.ServerError.WithDetails(err.Error()))
+		return
 	}
 
 	res.ToSuccess(list)
@@ -160,17 +155,10 @@ func (h *HttpController) GroupList(ctx *gin.Context) {
 		return
 	}
 
-	var list []string
-
-	if len(req.ClientId) > 0 {
-		getClient, ok := client.WsClientManage.GetClient(req.ClientId)
-		if !ok {
-			res.ToError(errcode.WsClientIdNotFound)
-			return
-		}
-		list = getClient.GroupList()
-	} else {
-		list = client.WsClientManage.GroupList()
+	list, err := service.GroupList(req.ClientId)
+	if err != nil {
+		res.ToError(errcode.ServerError.WithDetails(err.Error()))
+		return
 	}
 
 	res.ToSuccess(list)
@@ -180,7 +168,11 @@ func (h *HttpController) GroupList(ctx *gin.Context) {
 func (h *HttpController) MachineList(ctx *gin.Context) {
 	res := app.NewResponse(ctx)
 
-	machines := client.WsClientManage.GetMachines()
+	list, err := service.MachineList()
+	if err != nil {
+		res.ToError(errcode.ServerError.WithDetails(err.Error()))
+		return
+	}
 
-	res.ToSuccess(machines)
+	res.ToSuccess(list)
 }

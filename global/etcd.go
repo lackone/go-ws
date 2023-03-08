@@ -1,15 +1,21 @@
 package global
 
 import (
+	"fmt"
+	"github.com/lackone/go-ws/pkg/etcd"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 var (
 	EtcdClient *clientv3.Client
+	EtcdKV     *etcd.EtcdKV
+	WsEtcdDis  *etcd.EtcdDiscover
 )
 
 const (
-	ETCD_WS_SERVERS = "/ws/servers/"
+	ETCD_WS_SERVICES = "/ws/services/"
+	ETCD_WS_ACCOUNTS = "/ws/accounts/"
+	ETCD_WS_MACHINES = "/ws/machines/"
 )
 
 func InitEtcdClient() error {
@@ -21,7 +27,20 @@ func InitEtcdClient() error {
 			Username:    EtcdSetting.Username,
 			Password:    EtcdSetting.Password,
 		})
-		return err
+		if err != nil {
+			return err
+		}
+	}
+	if EtcdKV == nil {
+		EtcdKV = etcd.NewEtcdKV(EtcdClient)
+	}
+	if WsEtcdDis == nil {
+		var err error
+		WsEtcdDis, err = etcd.NewEtcdDiscover(EtcdClient, ETCD_WS_SERVICES)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(WsEtcdDis.ServiceList())
 	}
 	return nil
 }
