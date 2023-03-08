@@ -44,7 +44,7 @@ snowflake:
 etcd:
   DialTimeout: 5
   Endpoints:
-    - 127.0.0.1:2379
+    - 192.168.1.4:2379
   Username:
   Password:
 
