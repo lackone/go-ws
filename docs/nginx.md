@@ -52,7 +52,6 @@ server {
     
     location /ws {
         proxy_pass http://ws_cluster; # 代理转发地址
-
         proxy_read_timeout 60s; # 超时设置
 
         proxy_set_header Host $host;
