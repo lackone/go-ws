@@ -28,6 +28,8 @@ func (w *WsController) Ws(ctx *gin.Context) {
 
 	fmt.Println(ctx.Request.Header.Get("X-Real-IP"))
 	fmt.Println(ctx.Request.Header.Get("X-Forwarded-For"))
+	fmt.Println(conn.RemoteAddr().String())
+	fmt.Println(conn.LocalAddr().String())
 
 	//生成雪花ID
 	snowflakeId := global.SnowflakeNode.Generate().Int64()
