@@ -28,7 +28,7 @@ func InitEtcdClient() error {
 			Password:    EtcdSetting.Password,
 		})
 		if err != nil {
-			return err
+			panic(err)
 		}
 	}
 	if EtcdKV == nil {
