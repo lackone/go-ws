@@ -161,7 +161,7 @@ func (m *ClientManage) GroupSendMsg(msg []byte, groups ...string) {
 	if len(groups) > 0 {
 		for _, group := range groups {
 			if _, ok := m.groups[group]; ok {
-				for cid, _ := range m.groups[group] {
+				for cid := range m.groups[group] {
 					if _, yes := m.clients[cid]; yes {
 						m.clients[cid].SendMsg(msg)
 					}
@@ -176,7 +176,7 @@ func (m *ClientManage) MachineSendMsg(msg []byte, ips ...string) {
 	if len(ips) > 0 {
 		for _, ip := range ips {
 			if _, ok := m.machines[ip]; ok {
-				for cid, _ := range m.machines[ip] {
+				for cid := range m.machines[ip] {
 					if _, yes := m.clients[cid]; yes {
 						m.clients[cid].SendMsg(msg)
 					}
@@ -259,7 +259,7 @@ func (m *ClientManage) GroupList() []string {
 	defer m.groupsLock.RUnlock()
 	list := make([]string, 0)
 	if len(m.groups) > 0 {
-		for k, _ := range m.groups {
+		for k := range m.groups {
 			list = append(list, k)
 		}
 	}
@@ -272,7 +272,7 @@ func (m *ClientManage) MachineList() []string {
 	defer m.machinesLock.RUnlock()
 	list := make([]string, 0)
 	if len(m.machines) > 0 {
-		for k, _ := range m.machines {
+		for k := range m.machines {
 			list = append(list, k)
 		}
 	}

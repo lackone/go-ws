@@ -92,7 +92,7 @@ func (c *Client) GroupList() []string {
 	defer c.groupsLock.RUnlock()
 	list := make([]string, 0)
 	if len(c.groups) > 0 {
-		for k, _ := range c.groups {
+		for k := range c.groups {
 			list = append(list, k)
 		}
 	}

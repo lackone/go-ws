@@ -74,8 +74,8 @@ func (g *GRPCServer) Shutdown(ctx context.Context) error {
 
 // 清除ETCD中的数据
 func (g *GRPCServer) clearEtcdData() {
-	global.EtcdKV.DelAll(global.ETCD_WS_ACCOUNTS)
-	global.EtcdKV.DelAll(global.ETCD_WS_MACHINES)
+	global.EtcdKV.DelAll(global.ETCD_WS_ACCOUNTS + "/" + global.LocalIP)
+	global.EtcdKV.DelAll(global.ETCD_WS_MACHINES + "/" + global.LocalIP)
 }
 
 // 在ETCD注册服务
