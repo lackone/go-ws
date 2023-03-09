@@ -34,3 +34,14 @@ func GetExternalIP() (string, error) {
 	}
 	return string(all), nil
 }
+
+func RemoteIp(req *http.Request) string {
+	ip := req.Header.Get("X-Real-IP")
+	if ip == "" {
+		ip = req.Header.Get("X-Forwarded-For")
+	}
+	if ip == "" {
+		ip = req.RemoteAddr
+	}
+	return ip
+}

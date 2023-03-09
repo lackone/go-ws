@@ -238,8 +238,8 @@ func OnlineList() (map[string]any, error) {
 						for _, c := range allClient {
 							id := c.GetID()
 							list[id] = gin.H{
-								"addr": c.GetAddr(),
-								"id":   id,
+								"ip": c.GetIP(),
+								"id": id,
 							}
 						}
 					}
@@ -272,8 +272,8 @@ func OnlineList() (map[string]any, error) {
 			for _, c := range allClient {
 				id := c.GetID()
 				list[id] = gin.H{
-					"addr": c.GetAddr(),
-					"id":   id,
+					"ip": c.GetIP(),
+					"id": id,
 				}
 			}
 		}

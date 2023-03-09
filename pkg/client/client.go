@@ -6,9 +6,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/lackone/go-ws/global"
 	"go.uber.org/zap"
-	"net"
-	"net/netip"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -22,12 +19,9 @@ type Client struct {
 	groups       map[string]struct{} //客户加入的组
 	groupsLock   sync.RWMutex        //组锁
 	ip           string              //客户端IP，用于标识同一主机
-	port         int                 //端口
 }
 
-func NewClient(id string, conn *websocket.Conn, clientManage *ClientManage) *Client {
-	addrPort, _ := netip.ParseAddrPort(conn.RemoteAddr().String())
-
+func NewClient(id string, ip string, conn *websocket.Conn, clientManage *ClientManage) *Client {
 	return &Client{
 		id:           id,
 		conn:         conn,
@@ -36,8 +30,7 @@ func NewClient(id string, conn *websocket.Conn, clientManage *ClientManage) *Cli
 		send:         make(chan []byte, 256),
 		groups:       make(map[string]struct{}),
 		groupsLock:   sync.RWMutex{},
-		ip:           addrPort.Addr().String(),
-		port:         int(addrPort.Port()),
+		ip:           ip,
 	}
 }
 
@@ -45,11 +38,6 @@ func NewClient(id string, conn *websocket.Conn, clientManage *ClientManage) *Cli
 func (c *Client) Close() {
 	c.clientManage.disconnectChan <- c
 	c.conn.Close()
-}
-
-// 地址
-func (c *Client) GetAddr() string {
-	return net.JoinHostPort(c.GetIP(), strconv.Itoa(c.GetPort()))
 }
 
 // 连接时间
@@ -65,11 +53,6 @@ func (c *Client) GetID() string {
 // 获取ip
 func (c *Client) GetIP() string {
 	return c.ip
-}
-
-// 端口
-func (c *Client) GetPort() int {
-	return c.port
 }
 
 // 加入组

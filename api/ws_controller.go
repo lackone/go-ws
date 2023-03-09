@@ -24,12 +24,9 @@ func (w *WsController) Ws(ctx *gin.Context) {
 		return
 	}
 
-	fmt.Printf("client[%s] connect success ...\n", conn.RemoteAddr().String())
+	ip := utils.RemoteIp(ctx.Request)
 
-	fmt.Println(ctx.Request.Header.Get("X-Real-IP"))
-	fmt.Println(ctx.Request.Header.Get("X-Forwarded-For"))
-	fmt.Println(conn.RemoteAddr().String())
-	fmt.Println(conn.LocalAddr().String())
+	fmt.Printf("client[%s] connect success ...\n", ip)
 
 	//生成雪花ID
 	snowflakeId := global.SnowflakeNode.Generate().Int64()

@@ -182,8 +182,8 @@ func (i *IMService) OnlineList(ctx context.Context, req *im.OnlineListReq) (*im.
 		for _, c := range allClient {
 			id := c.GetID()
 			list[id] = gin.H{
-				"addr": c.GetAddr(),
-				"id":   id,
+				"ip": c.GetIP(),
+				"id": id,
 			}
 		}
 	}

@@ -123,7 +123,7 @@ func (m *ClientManage) AddMachineByClient(c *Client) {
 
 	val, _ := json.Marshal(gin.H{
 		"id":          c.GetID(),
-		"addr":        c.GetAddr(),
+		"ip":          c.GetIP(),
 		"connectTime": c.GetConnectTime(),
 	})
 	global.EtcdKV.Put(global.ETCD_WS_MACHINES+"/"+global.LocalIP+"/"+ip+"/"+c.GetID(), string(val))
@@ -215,7 +215,7 @@ func (m *ClientManage) AddClient(c *Client) {
 
 	val, _ := json.Marshal(gin.H{
 		"id":          c.GetID(),
-		"addr":        c.GetAddr(),
+		"ip":          c.GetIP(),
 		"connectTime": c.GetConnectTime(),
 	})
 	global.EtcdKV.Put(global.ETCD_WS_ACCOUNTS+"/"+global.LocalIP+"/"+c.id, string(val))
