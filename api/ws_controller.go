@@ -34,7 +34,7 @@ func (w *WsController) Ws(ctx *gin.Context) {
 	clientId := utils.GenerateClientId(global.LocalIP, global.GrpcSetting.GrpcPort, snowflakeId, global.WsSetting.AesKey)
 
 	//创建客户端
-	wsClient := client.NewClient(clientId, conn, client.WsClientManage)
+	wsClient := client.NewClient(clientId, ip, conn, client.WsClientManage)
 	//向客户端发送连接消息
 	wsClient.SendCommonMsg(200, "connect success", gin.H{"client_id": clientId, "connect_time": time.Now().Format(time.RFC3339)})
 
