@@ -2,7 +2,7 @@
 
 使用gin，viper，websocket，etcd，grpc实现的分布式可扩展的websocket im系统
 
-### 一、单机使用
+## 一、单机使用
 
 1、下载
 
@@ -36,7 +36,7 @@ CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build
 
 如果不指定 -conf，则默认会读取 ./configs/app.yaml 文件。
 
-### 二、分布式使用
+## 二、分布式使用
 
 1、修改 configs/app.yaml 中 ws.IsCluster 为 true，并配置 ws.AesKey 的key。
 
@@ -110,13 +110,14 @@ server {
 
 6、这时就可以访问 ws://192.168.1.4:9992/ws 进行 websocket 连接了，连接成功会返回 client_id。
 
-### 三、http接口
+## 三、http接口
 
-http的接口地址为 http://192.168.1.4:9991，这与你在上面 nginx 配置的端口一致。
+http的接口地址为 http://192.168.1.4:9991 这与你在上面 nginx 配置的端口一致。
 
 1、[http接口文档](docs/api.md)
 
-### 四、实现的功能
+
+## 四、实现的功能
 
 - [x] 分布式
 - [x] 节点与节点间相互独立
