@@ -41,7 +41,12 @@ func RemoteIp(req *http.Request) string {
 		ip = req.Header.Get("X-Forwarded-For")
 	}
 	if ip == "" {
-		ip = req.RemoteAddr
+		addr := req.RemoteAddr
+		addrPort, err := netip.ParseAddrPort(addr)
+		if err != nil {
+			return ""
+		}
+		ip = addrPort.Addr().String()
 	}
 	return ip
 }
